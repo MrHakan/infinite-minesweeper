@@ -8,6 +8,7 @@ An endless, deterministic Minesweeper game built as a zero-backend static site f
 - The run begins in a guaranteed-safe origin zone.
 - New cells must be revealed from the explored frontier, so progress expands continuously instead of teleporting across the world.
 - One mine ends the run.
+- Clicking an already-revealed numbered cell performs classic Minesweeper **chording**: when its adjacent flag count matches the number, every other covered neighbor opens at once. Incorrect flag placement can still expose a mine and end the run.
 - Active runs, compact chunk state, settings, and local run history are stored in `localStorage`.
 - Rendering uses one `<canvas>` and redraws only when dirty; there is no DOM node per cell and no continuous animation loop.
 - World state is stored as two 256-bit masks per touched 16×16 chunk. Memory grows only with genuinely explored territory rather than viewport movement.

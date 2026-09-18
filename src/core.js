@@ -172,6 +172,43 @@ export class WorldState {
     return { accepted: cells.length > 0, mine: false, cells };
   }
 
+  chord(x, y) {
+    if (!this.isRevealed(x, y)) {
+      return { accepted: false, mine: false, opened: 0, hit: null };
+    }
+
+    const requiredFlags = neighborCount(x, y, this.seed);
+    if (requiredFlags === 0) {
+      return { accepted: false, mine: false, opened: 0, hit: null };
+    }
+
+    let adjacentFlags = 0;
+    const targets = [];
+    for (const [dx, dy] of DIRS) {
+      const nx = x + dx, ny = y + dy;
+      if (this.isFlagged(nx, ny)) adjacentFlags++;
+      else if (!this.isRevealed(nx, ny)) targets.push([nx, ny]);
+    }
+
+    if (adjacentFlags !== requiredFlags || targets.length === 0) {
+      return { accepted: false, mine: false, opened: 0, hit: null };
+    }
+
+    let opened = 0;
+    for (const [nx, ny] of targets) {
+      // An earlier zero-cell flood can reveal a later target in this same chord.
+      if (this.isRevealed(nx, ny) || this.isFlagged(nx, ny)) continue;
+      const result = this.reveal(nx, ny);
+      if (!result.accepted) continue;
+      if (result.mine) {
+        return { accepted: true, mine: true, opened, hit: { x: nx, y: ny } };
+      }
+      opened += result.cells.length;
+    }
+
+    return { accepted: opened > 0, mine: false, opened, hit: null };
+  }
+
   serialize() {
     const chunks = [];
     for (const [key, bytes] of this.chunks) {
@@ -273,7 +310,7 @@ export function encodeActions(actions) {
   const out = [];
   let px = 0, py = 0;
   for (const a of actions) {
-    out.push(a.t === 'f' ? 1 : 0);
+    out.push(a.t === 'f' ? 1 : a.t === 'c' ? 2 : 0);
     writeVarint(out, zigzagEncode((a.x | 0) - px));
     writeVarint(out, zigzagEncode((a.y | 0) - py));
     writeVarint(out, Math.max(0, Math.min(0xffffffff, Math.round(a.dt))));
@@ -291,11 +328,11 @@ export function decodeActions(encoded, maxActions = MAX_SHARE_ACTIONS) {
   while (st.i < bytes.length) {
     if (actions.length >= maxActions) throw new Error('Too many actions');
     const type = bytes[st.i++];
-    if (type > 1) throw new Error('Invalid action type');
+    if (type > 2) throw new Error('Invalid action type');
     x += zigzagDecode(readVarint(bytes, st));
     y += zigzagDecode(readVarint(bytes, st));
     const dt = readVarint(bytes, st);
-    actions.push({ t: type ? 'f' : 'r', x, y, dt });
+    actions.push({ t: type === 1 ? 'f' : type === 2 ? 'c' : 'r', x, y, dt });
   }
   return actions;
 }
@@ -349,21 +386,29 @@ export async function verifyShareCode(code) {
       if (dead) return { valid: false, reason: 'post-death-actions' };
       if (!Number.isSafeInteger(a.x) || !Number.isSafeInteger(a.y) || Math.abs(a.x) > 100000 || Math.abs(a.y) > 100000) return { valid: false, reason: 'coordinates' };
       elapsed += a.dt;
-      if (a.t === 'r') {
+      if (a.t === 'r' || a.t === 'c') {
         revealActions++;
         if (a.dt < 25) ultraFast++; else ultraFast = 0;
         if (ultraFast > 14) return { valid: false, reason: 'machine-speed-input' };
-        if (!world.canInteract(a.x, a.y)) return { valid: false, reason: 'frontier' };
-        const rr = world.reveal(a.x, a.y);
-        if (!rr.accepted) return { valid: false, reason: 'invalid-reveal' };
-        if (rr.mine) dead = true;
+
+        if (a.t === 'c') {
+          if (!world.isRevealed(a.x, a.y)) return { valid: false, reason: 'invalid-chord-center' };
+          const cr = world.chord(a.x, a.y);
+          if (!cr.accepted) return { valid: false, reason: 'invalid-chord' };
+          if (cr.mine) dead = true;
+        } else {
+          if (!world.canInteract(a.x, a.y)) return { valid: false, reason: 'frontier' };
+          const rr = world.reveal(a.x, a.y);
+          if (!rr.accepted) return { valid: false, reason: 'invalid-reveal' };
+          if (rr.mine) dead = true;
+        }
       } else {
         if (!world.canInteract(a.x, a.y) || world.isRevealed(a.x, a.y)) return { valid: false, reason: 'invalid-flag' };
         world.toggleFlag(a.x, a.y);
       }
       if (world.revealedCount > 750000 || world.chunks.size > 15000) return { valid: false, reason: 'limits' };
     }
-    if (!dead || actions[actions.length - 1].t !== 'r') return { valid: false, reason: 'not-ended' };
+    if (!dead || !['r', 'c'].includes(actions[actions.length - 1].t)) return { valid: false, reason: 'not-ended' };
     if (Math.abs(elapsed - payload.e) > 150) return { valid: false, reason: 'time-mismatch' };
     if (revealActions > 8 && elapsed < revealActions * 30) return { valid: false, reason: 'impossible-rate' };
 

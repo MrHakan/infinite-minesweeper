@@ -74,7 +74,7 @@ function restoreRun() {
     world = new WorldState(run.seed, data.world);
     actions = typeof data.actionLog === 'string'
       ? decodeActions(data.actionLog, Infinity)
-      : data.actions.filter(a => a && (a.t === 'r' || a.t === 'f')); // backward-compatible v1 saves
+      : data.actions.filter(a => a && (a.t === 'r' || a.t === 'f' || a.t === 'c')); // backward-compatible v1 saves
     camera = data.camera || { x: 0, y: 0, zoom: 34 };
     openGame();
     return true;
@@ -148,6 +148,22 @@ function recordAction(t, x, y) {
 function revealCell(x, y) {
   if (!run || run.dead) return;
   if (!world.canInteract(x, y)) { showToast('Expand from the frontier'); return; }
+
+  // Classic Minesweeper chording: clicking an already-open number opens all
+  // remaining adjacent cells when the surrounding flag count matches it.
+  if (world.isRevealed(x, y)) {
+    const chord = world.chord(x, y);
+    if (!chord.accepted) return;
+    recordAction('c', x, y);
+    if (chord.mine) endRun(chord.hit.x, chord.hit.y);
+    else {
+      queueSave();
+      updateHud();
+      markDirty();
+    }
+    return;
+  }
+
   const result = world.reveal(x, y);
   if (!result.accepted) return;
   recordAction('r', x, y);
