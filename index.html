@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#0a0d12">
+  <meta name="description" content="An endless, deterministic Minesweeper run with replay-verified community scores.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://avatars.githubusercontent.com data:; connect-src 'self' https://api.github.com; style-src 'self'; script-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'">
+  <title>Infinite Minesweeper</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <canvas id="game" class="hidden" aria-label="Infinite Minesweeper board"></canvas>
+
+  <main id="menu" class="screen menuScreen">
+    <div class="brandMark" aria-hidden="true"><span>∞</span><i>✹</i></div>
+    <p class="eyebrow">NO EDGES · NO FINAL LEVEL</p>
+    <h1>Infinite<br><span>Minesweeper</span></h1>
+    <p class="lede">Clear as far as you can. One mine ends the run. Your world is deterministic, resumable, and stored locally.</p>
+    <div class="menuActions">
+      <button id="newBtn" class="primary">New run <kbd>∞</kbd></button>
+      <button id="continueBtn">Continue run</button>
+      <button id="statsBtn">Stats & leaderboard</button>
+    </div>
+    <div class="rules">
+      <div><b>Tap / left click</b><span>Reveal</span></div>
+      <div><b>Long press / right click</b><span>Flag</span></div>
+      <div><b>Drag · wheel</b><span>Pan · zoom</span></div>
+    </div>
+    <p class="smallPrint">Frontier rule: you can only reveal cells connected to explored territory. No account required to play.</p>
+  </main>
+
+  <section id="gameHud" class="hud hidden">
+    <button id="menuBtn" class="iconBtn" aria-label="Back to menu">←</button>
+    <div><span>Score</span><strong id="hudScore">0</strong></div>
+    <div><span>Cleared</span><strong id="hudCells">0</strong></div>
+    <div><span>Flags</span><strong id="hudFlags">0</strong></div>
+    <div><span>Radius</span><strong id="hudDistance">0</strong></div>
+    <label class="toggleLabel"><input id="gridToggle" type="checkbox"><span>Grid</span></label>
+  </section>
+
+  <section id="deathPanel" class="modal hidden" aria-live="polite">
+    <div class="modalCard deathCard">
+      <p class="eyebrow danger">RUN OVER</p>
+      <h2>You hit a mine.</h2>
+      <div class="bigScore"><span>Final score</span><strong id="deathScore">0</strong></div>
+      <div id="deathGrid" class="statGrid"></div>
+      <div class="modalActions">
+        <button id="retryBtn" class="primary">New run</button>
+        <button id="shareBtn">Share with people</button>
+        <button id="openGistBtn" class="subtle">Open leaderboard Gist</button>
+        <button id="deathMenuBtn" class="subtle">Main menu</button>
+      </div>
+      <div id="shareCodeWrap" class="shareCodeWrap hidden"><textarea id="shareCode" readonly></textarea></div>
+      <p class="smallPrint">Sharing copies a replay code. Paste it as a comment on the leaderboard Gist; the site replays and validates it before ranking.</p>
+    </div>
+  </section>
+
+  <section id="statsPanel" class="screen statsScreen hidden">
+    <header class="statsHeader">
+      <button id="statsBackBtn" class="iconBtn" aria-label="Back">←</button>
+      <div><p class="eyebrow">RUN ARCHIVE</p><h2>Stats & leaderboard</h2></div>
+    </header>
+
+    <div class="statsLayout">
+      <article class="panel">
+        <div class="panelTitle"><div><p class="eyebrow">THIS DEVICE</p><h3>Recent runs</h3></div></div>
+        <div id="localHistory" class="history"></div>
+      </article>
+
+      <article class="panel leaderboardPanel">
+        <div class="panelTitle">
+          <div><p class="eyebrow">GIST COMMUNITY</p><h3>Replay-verified scores</h3></div>
+          <button id="refreshLeaderboard" class="smallBtn">Re-verify</button>
+        </div>
+        <div class="filters">
+          <select id="metricFilter" aria-label="Sort metric"><option value="score">Score</option><option value="cells">Cleared cells</option><option value="time">Survival time</option><option value="distance">Max radius</option></select>
+          <select id="periodFilter" aria-label="Time period"><option value="all">All time</option><option value="30d">Last 30 days</option><option value="7d">Last 7 days</option></select>
+          <input id="playerFilter" type="search" placeholder="Filter player…" aria-label="Filter player">
+          <label class="check"><input id="bestOnly" type="checkbox" checked> Best per player</label>
+        </div>
+        <p id="leaderboardStatus" class="statusText">Open this tab to load public Gist comments.</p>
+        <div class="tableWrap"><table><thead><tr><th>#</th><th>Player</th><th>Score</th><th>Cells</th><th>Time</th><th>Radius</th></tr></thead><tbody id="leaderboardBody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody></table></div>
+        <p class="smallPrint">“Replay-verified” means the public action log reproduces the posted result under the game rules. Because GitHub Pages is client-only, this is tamper-resistant rather than server-authoritative anti-cheat.</p>
+      </article>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
