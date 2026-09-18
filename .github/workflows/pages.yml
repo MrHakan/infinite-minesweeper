@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Validate game core
+        run: node --test tests/core.test.mjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static site
