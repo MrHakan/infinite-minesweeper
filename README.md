@@ -16,7 +16,8 @@ Your starting area is safe in every mode. Changing worlds asks before replacing 
 
 | Action | Mouse / touch | Keyboard (board focused) |
 | --- | --- | --- |
-| Reveal / quick open | Click / tap in Reveal mode | Enter or Space |
+| Reveal | Click / tap in Reveal mode | Enter or Space |
+| Quick open an open number | Click / tap in either mode when neighboring flags match | Enter or Space |
 | Flag / unflag | Right click, long press, or tap in Flag mode | F |
 | Select cell | Click / tap | Arrow keys |
 | Pan | Drag | Selection scrolls into view |

@@ -368,7 +368,7 @@ function setInputMode(mode) {
   for (const [id, value] of [['revealModeBtn', 'reveal'], ['flagModeBtn', 'flag']]) {
     $(`#${id}`).classList.toggle('selected', mode === value); $(`#${id}`).setAttribute('aria-pressed', mode === value);
   }
-  $('#boardHint').textContent = mode === 'flag' ? 'Flag mode: tap a covered cell to mark or unmark it.' : 'Read the numbers. Expand from the green edge.';
+  $('#boardHint').textContent = mode === 'flag' ? 'Tap covered cells to flag. Tap an open number to quick open.' : 'Read the numbers. Expand from the green edge.';
 }
 function recenter(cell) {
   camera.x = cell.x; camera.y = cell.y; selection = { ...cell };
@@ -417,7 +417,8 @@ function releasePointer(e, cancelled = false) {
   if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
   if (!p.moved && !cancelled && !run.dead) {
     selection = screenToWorld(e.clientX, e.clientY);
-    if (p.button === 2 || performance.now() - p.time > 520 || inputMode === 'flag') flagCell(selection.x, selection.y);
+    const flagGesture = p.button === 2 || performance.now() - p.time > 520;
+    if (flagGesture || (inputMode === 'flag' && !world.isRevealed(selection.x, selection.y))) flagCell(selection.x, selection.y);
     else revealCell(selection.x, selection.y);
     describeCell(); markDirty();
   } else if (!run.dead) queueSave();
