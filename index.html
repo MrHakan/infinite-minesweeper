@@ -2,91 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#0a0d12">
-  <meta name="description" content="An endless, deterministic Minesweeper run with replay-verified community scores.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://avatars.githubusercontent.com data:; connect-src 'self' https://api.github.com; style-src 'self'; script-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1e9">
+  <meta name="description" content="An endless Minesweeper expedition. Play a new world every day, explore with friends, and keep your run on this device.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://avatars.githubusercontent.com data:; connect-src 'self' https://api.github.com; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'">
   <title>Infinite Minesweeper</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <canvas id="game" class="hidden" aria-label="Infinite Minesweeper board"></canvas>
+  <canvas id="game" class="hidden" tabindex="0" aria-label="Infinite Minesweeper board. Arrow keys select a cell, Enter reveals, F flags, Home returns to origin." aria-describedby="boardHint"></canvas>
 
   <main id="menu" class="screen menuScreen">
-    <div class="brandMark" aria-hidden="true"><span>∞</span><i>✹</i></div>
-    <p class="eyebrow">NO EDGES · NO FINAL LEVEL</p>
-    <h1>Infinite<br><span>Minesweeper</span></h1>
-    <p class="lede">Clear as far as you can. One mine ends the run. Your world is deterministic, resumable, and stored locally.</p>
-    <div class="menuActions">
-      <button id="newBtn" class="primary">New run <kbd>∞</kbd></button>
-      <button id="continueBtn">Continue run</button>
-      <button id="statsBtn">Stats & leaderboard</button>
+    <header class="siteHeader"><a class="wordmark" href="./"><span class="logo">∞</span> INFINITE MINESWEEPER</a><span class="edition">AN ENDLESS FIELD OF POSSIBILITIES</span><button id="helpBtn" class="quiet">How to play <span aria-hidden="true">↗</span></button></header>
+    <div class="menuLayout">
+      <section class="intro">
+        <p class="eyebrow"><span class="dot"></span> ONE MINE. NO FINISH LINE.</p>
+        <h1>A little logic.<br>A lot of<br><em>uncharted territory.</em></h1>
+        <p class="lede">The familiar puzzle, without the edges. Read the numbers, mark the mines, and see how far you can go.</p>
+        <div class="menuActions"><button id="newBtn" class="primary">Start exploring <span aria-hidden="true">→</span></button><button id="continueBtn" disabled>Continue run</button></div>
+        <p id="continueSummary" class="saveNote">Your progress stays on this device.</p>
+        <div class="menuLinks"><button id="statsBtn" class="textBtn">Your runs & community <span aria-hidden="true">↗</span></button><span>Safe first reveal · Auto-saved</span></div>
+      </section>
+      <aside class="fieldCard">
+        <div class="fieldHeader"><span class="eyebrow">FIELD NOTES / 001</span><span class="mono">∞ × ∞</span></div>
+        <div class="previewFrame"><canvas id="preview" width="480" height="360" aria-label="Example of a Minesweeper field with numbered cells and flags"></canvas><span class="previewCaption">THERE'S ALWAYS ANOTHER CELL.</span></div>
+        <div class="dailyCard"><div><p class="eyebrow">TODAY'S EXPEDITION</p><h2 id="dailyDate">Daily world</h2><p>One shared field. A fresh start every day.</p></div><button id="dailyBtn" aria-label="Play today's world">Play daily <span aria-hidden="true">→</span></button></div>
+        <details class="seedDetails"><summary>Have a world seed? <span aria-hidden="true">+</span></summary><form id="seedForm"><label for="seedInput">World seed</label><div class="seedRow"><input id="seedInput" inputmode="numeric" maxlength="10" placeholder="e.g. 123456" aria-describedby="seedError"><button type="submit">Explore →</button></div><p id="seedError" class="smallPrint" role="status">Use the same seed to explore the same field.</p></form></details>
+      </aside>
     </div>
-    <div class="rules">
-      <div><b>Tap / left click</b><span>Reveal</span></div>
-      <div><b>Long press / right click</b><span>Flag</span></div>
-      <div><b>Drag · wheel</b><span>Pan · zoom</span></div>
-    </div>
-    <p class="smallPrint">Frontier rule: you can only reveal cells connected to explored territory. No account required to play.</p>
+    <footer class="siteFooter"><span>BUILT FOR THE NEXT “JUST ONE MORE”.</span><div><span>Reveal</span><b>click / tap</b><span>Flag</span><b>right click / flag mode</b><span>Explore</span><b>drag / pinch</b></div></footer>
   </main>
 
-  <section id="gameHud" class="hud hidden">
-    <button id="menuBtn" class="iconBtn" aria-label="Back to menu">←</button>
-    <div><span>Score</span><strong id="hudScore">0</strong></div>
-    <div><span>Cleared</span><strong id="hudCells">0</strong></div>
-    <div><span>Flags</span><strong id="hudFlags">0</strong></div>
-    <div><span>Radius</span><strong id="hudDistance">0</strong></div>
-    <label class="toggleLabel"><input id="gridToggle" type="checkbox"><span>Grid</span></label>
+  <section id="gameHud" class="hud hidden" aria-label="Run statistics">
+    <div class="hudTop"><button id="menuBtn" class="squareBtn" aria-label="Pause and return to menu">←</button><div class="runIdentity"><strong>INFINITE<span> / FIELD</span></strong><button id="seedCopyBtn" class="textBtn" title="Copy a link to this world"><span id="hudSeed">World</span> ↗</button></div><div class="hudMetrics"><div><span>Score</span><strong id="hudScore">0</strong></div><div><span>Cleared</span><strong id="hudCells">0</strong></div><div><span>Flags</span><strong id="hudFlags">0</strong></div><div><span>Radius</span><strong id="hudDistance">0</strong></div><div><span>Time</span><strong id="hudTime">0:00</strong></div></div><button id="gameHelpBtn" class="squareBtn" aria-label="How to play">?</button></div>
+    <div class="boardInfo"><button id="hudMode" class="textBtn" aria-label="Copy a link to this world" title="Copy world link">RANDOM WORLD</button><span id="coordinates" aria-live="off">X 0 / Y 0</span><span id="saveStatus">Saved locally</span></div>
+  </section>
+  <section id="boardControls" class="boardControls hidden" aria-label="Board controls">
+    <p id="boardHint">Read the numbers. Expand from the green edge.</p>
+    <div class="controlDock"><div class="modeSwitch" role="group" aria-label="Tap action"><button id="revealModeBtn" class="selected" aria-pressed="true">◇ <span>Reveal</span></button><button id="flagModeBtn" aria-pressed="false">⚑ <span>Flag</span></button></div><span class="dockDivider"></span><button id="originBtn" class="squareBtn" aria-label="Return to starting area" title="Return to origin (Home)"><svg class="lineIcon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 2v5m0 10v5M2 12h5m10 0h5"/></svg></button><button id="frontierBtn" class="squareBtn" aria-label="Return to last cleared cell" title="Return to last cleared cell">↗</button><span class="dockDivider"></span><button id="zoomOutBtn" class="squareBtn" aria-label="Zoom out">−</button><span id="zoomValue" class="mono">100%</span><button id="zoomInBtn" class="squareBtn" aria-label="Zoom in">+</button><button id="settingsBtn" class="squareBtn" aria-label="Board settings" title="Board settings">☷</button></div>
+    <div id="boardSettings" class="boardSettings hidden"><label><input id="gridToggle" type="checkbox"> Grid lines</label><label><input id="soundToggle" type="checkbox"> Sound</label></div>
+  </section>
+  <button id="resultsBtn" class="resultsBtn hidden">View run results →</button>
+
+  <section id="deathPanel" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="deathTitle">
+    <div class="modalCard deathCard"><div class="panelTitle"><p class="eyebrow danger">EXPEDITION COMPLETE</p><button id="inspectBtn" class="quiet">Inspect field ↗</button></div><h2 id="deathTitle">Every field has<br>its last cell.</h2><p id="deathNote" class="muted">You hit a mine.</p><div class="bigScore"><span>FINAL SCORE</span><strong id="deathScore">0</strong></div><div id="deathGrid" class="statGrid"></div><div class="modalActions"><button id="retryBtn" class="primary">Explore a new world →</button><button id="shareBtn">Share verified replay ↗</button><button id="deathMenuBtn" class="quiet">Main menu</button><button id="openGistBtn" class="quiet">Community leaderboard ↗</button></div><div id="shareCodeWrap" class="shareCodeWrap hidden"><label for="shareCode">Copy this replay into a leaderboard Gist comment.</label><textarea id="shareCode" readonly></textarea></div><p class="smallPrint">Community scores are checked by replaying the entire run. Sharing opens the leaderboard Gist; paste your code as a comment.</p></div>
   </section>
 
-  <section id="deathPanel" class="modal hidden" aria-live="polite">
-    <div class="modalCard deathCard">
-      <p class="eyebrow danger">RUN OVER</p>
-      <h2>You hit a mine.</h2>
-      <div class="bigScore"><span>Final score</span><strong id="deathScore">0</strong></div>
-      <div id="deathGrid" class="statGrid"></div>
-      <div class="modalActions">
-        <button id="retryBtn" class="primary">New run</button>
-        <button id="shareBtn">Share with people</button>
-        <button id="openGistBtn" class="subtle">Open leaderboard Gist</button>
-        <button id="deathMenuBtn" class="subtle">Main menu</button>
-      </div>
-      <div id="shareCodeWrap" class="shareCodeWrap hidden"><textarea id="shareCode" readonly></textarea></div>
-      <p class="smallPrint">Sharing copies a replay code. Paste it as a comment on the leaderboard Gist; the site replays and validates it before ranking.</p>
-    </div>
-  </section>
+  <dialog id="helpDialog" class="helpDialog"><div class="panelTitle"><p class="eyebrow">THE FIELD GUIDE</p><button id="closeHelpBtn" class="squareBtn" aria-label="Close help">×</button></div><h2>A number is a clue.</h2><p>Each number tells you how many of its eight neighbors contain mines. Clear the safe cells and flag the ones you suspect.</p><div class="guideSteps"><div><b>01 / REVEAL</b><p>Click or tap a covered cell on the green frontier. Your starting area is always safe.</p></div><div><b>02 / FLAG</b><p>Right click, hold for half a second, or switch to Flag mode. Tap a flag again to remove it.</p></div><div><b>03 / QUICK OPEN</b><p>Click an open number when its surrounding flag count matches it to reveal the other neighbors. Wrong flags can end the run.</p></div><div><b>04 / KEEP EXPLORING</b><p>Drag to move. Scroll, pinch, or use + / − to zoom. The board has no edge and a mine ends your run.</p></div></div><p class="keyboardGuide"><kbd>↑ ↓ ← →</kbd> select · <kbd>Enter</kbd> reveal · <kbd>F</kbd> flag · <kbd>Home</kbd> origin · <kbd>Esc</kbd> pause</p><p class="smallPrint">Daily worlds reset at 00:00 UTC. Runs pause in the menu and while this tab is hidden. Starting a different world replaces your active run.</p></dialog>
+  <dialog id="replaceDialog" class="helpDialog"><p class="eyebrow">A FIELD IS STILL IN PROGRESS</p><h2>Start somewhere new?</h2><p>Your current unfinished run will be replaced. Finished runs stay in your archive.</p><div class="modalActions"><button id="confirmNewBtn" class="primary">Start new run →</button><button id="cancelNewBtn">Keep current run</button></div></dialog>
 
-  <section id="statsPanel" class="screen statsScreen hidden">
-    <header class="statsHeader">
-      <button id="statsBackBtn" class="iconBtn" aria-label="Back">←</button>
-      <div><p class="eyebrow">RUN ARCHIVE</p><h2>Stats & leaderboard</h2></div>
-    </header>
-
-    <div class="statsLayout">
-      <article class="panel">
-        <div class="panelTitle"><div><p class="eyebrow">THIS DEVICE</p><h3>Recent runs</h3></div></div>
-        <div id="localHistory" class="history"></div>
-      </article>
-
-      <article class="panel leaderboardPanel">
-        <div class="panelTitle">
-          <div><p class="eyebrow">GIST COMMUNITY</p><h3>Replay-verified scores</h3></div>
-          <button id="refreshLeaderboard" class="smallBtn">Re-verify</button>
-        </div>
-        <div class="filters">
-          <select id="metricFilter" aria-label="Sort metric"><option value="score">Score</option><option value="cells">Cleared cells</option><option value="time">Survival time</option><option value="distance">Max radius</option></select>
-          <select id="periodFilter" aria-label="Time period"><option value="all">All time</option><option value="30d">Last 30 days</option><option value="7d">Last 7 days</option></select>
-          <input id="playerFilter" type="search" placeholder="Filter player…" aria-label="Filter player">
-          <label class="check"><input id="bestOnly" type="checkbox" checked> Best per player</label>
-        </div>
-        <p id="leaderboardStatus" class="statusText">Open this tab to load public Gist comments.</p>
-        <div class="tableWrap"><table><thead><tr><th>#</th><th>Player</th><th>Score</th><th>Cells</th><th>Time</th><th>Radius</th></tr></thead><tbody id="leaderboardBody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody></table></div>
-        <p class="smallPrint">“Replay-verified” means the public action log reproduces the posted result under the game rules. Because GitHub Pages is client-only, this is tamper-resistant rather than server-authoritative anti-cheat.</p>
-      </article>
-    </div>
-  </section>
-
-  <div id="toast" class="toast" role="status"></div>
+  <section id="statsPanel" class="screen statsScreen hidden"><header class="statsHeader"><button id="statsBackBtn" class="squareBtn" aria-label="Back to menu">←</button><div><p class="eyebrow">THE RUN ARCHIVE</p><h2>Ground covered.</h2></div></header><div id="archiveSummary" class="archiveSummary"></div><div class="statsLayout"><article class="panel"><div class="panelTitle"><div><p class="eyebrow">THIS DEVICE</p><h3>Recent expeditions</h3></div></div><div id="localHistory" class="history"></div></article><article class="panel leaderboardPanel"><div class="panelTitle"><div><p class="eyebrow">COMMUNITY</p><h3>Replay-verified scores</h3></div><button id="refreshLeaderboard" class="smallBtn">Refresh ↻</button></div><div class="filters"><select id="metricFilter" aria-label="Sort metric"><option value="score">Score</option><option value="cells">Cleared cells</option><option value="time">Survival time</option><option value="distance">Max radius</option></select><select id="periodFilter" aria-label="Time period"><option value="all">All time</option><option value="30d">Last 30 days</option><option value="7d">Last 7 days</option></select><input id="playerFilter" type="search" placeholder="Find a player…" aria-label="Filter player"><label class="check"><input id="bestOnly" type="checkbox" checked> Best per player</label></div><p id="leaderboardStatus" class="statusText" role="status">Load public Gist comments to see community scores.</p><div class="tableWrap"><table><thead><tr><th>#</th><th>Player</th><th>Score</th><th>Cells</th><th>Time</th><th>Radius</th></tr></thead><tbody id="leaderboardBody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody></table></div><p class="smallPrint">Replay-verified means the public action log reproduces the posted result. This is a browser-based game, so verification cannot prevent every kind of cheating.</p></article></div></section>
+  <div id="toast" class="toast" role="status"></div><div id="cellStatus" class="srOnly" aria-live="polite"></div>
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>
